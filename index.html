@@ -220,7 +220,6 @@
 
             // 监听滚动，判断是否滚动到底部
             $('main').scroll(function () {
-
                 if($('main').scrollTop() + $('main').height() === $('#section1').height()){
                     console.log('hit bottom');
                     queryTop250();
