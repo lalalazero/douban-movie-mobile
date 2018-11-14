@@ -1,12 +1,232 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
+    <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
     <meta charset="UTF-8">
+    <meta name="referrer" content="never">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <title>豆瓣电影</title>
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_917992_r3ston7k18.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-size: 12px;
+            line-height: 1.2;
+            position: relative;
+        }
+        main{
+            height: calc(100vh - 50px);
+            overflow: scroll;
+        }
+
+        main > section {
+            display: none;
+        }
+
+        main > section.active {
+            display: block;
+        }
+
+        a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        .cover > img {
+            width: 100%;
+        }
+
+        .cover {
+            float: left;
+            width: 70px;
+        }
+
+        .clearfix::after {
+            content: '';
+            display: block;
+            clear: both;
+        }
+
+        .detail {
+            margin-left: 75px;
+        }
+
+        .title {
+            font-weight: 700;
+        }
+
+        .score {
+            color: orange;
+        }
+
+        .detail > p {
+            margin: 4px 0;
+        }
+
+        li {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-top: 1px solid #ccc;
+            display: flex;
+            padding: 5px 0;
+            height: 50px;
+        }
+
+        footer > div {
+            flex: 1;
+            text-align: center;
+        }
+
+        footer > div > span {
+            display: block;
+        }
+
+        footer .active {
+            color: orange;
+        }
+    </style>
 </head>
 <body>
+    <main>
+        <section class='active' id="section1">
+            <ul class="top250">
+                <!--<li>-->
+                    <!--<a href="" class='clearfix'>-->
+                        <!--<div class='cover'>-->
+                            <!--<img src="http://img3.doubanio.com/view/photo/s_ratio_poster/public/p524964016.jpg" alt="">-->
+                        <!--</div>-->
+                        <!--<div class="detail">-->
+                            <!--<h3 class='title'>霸王别姬</h3>-->
+                            <!--<p><span class='score'>9.3分</span><span>／1000收藏</span></p>-->
+                            <!--<p>1994／剧情、爱情</p>-->
+                            <!--<p>导演：诺兰</p>-->
+                            <!--<p>主演：张艺谋，张艺谋，张艺谋</p>-->
+                        <!--</div>-->
+                    <!--</a>-->
+                <!--</li>-->
+            </ul>
+        </section>
+        <section id="section2">2</section>
+        <section id="section3">3</section>
+    </main>
+    <footer>
+        <div class='active'>
+            <span class="iconfont icon-TOP"></span><span>Top250</span>
+        </div>
+        <div>
+            <span class="iconfont icon-us"></span><span>北美</span>
+        </div>
+        <div>
+            <span class="iconfont icon-search"></span><span>搜索</span>
+        </div>
+    </footer>
 
+
+    <script>
+
+        var start = 0;
+        $('footer>div').click(function () {
+            var index = $(this).index();
+            console.log('index ' + index);
+            if(index === 0)
+            {
+                queryTop250();
+            }
+            $(this).addClass('active').siblings().removeClass('active');
+            $('section').removeClass('active').eq($(this).index()).addClass('active');
+        })
+
+        function queryTop250() {
+            $.ajax({
+                url: '//api.douban.com/v2/movie/top250',
+                data: {
+                    start: start,
+                    count: 10
+                },
+                dataType: 'jsonp'
+            }).done(function(ret){
+                console.log('done');
+                setData(ret);
+                start += 10;
+            }).error(function (err) {
+                console.log('error...');
+                alert(err);
+            })
+
+            function setData(ret){
+                ret.subjects.forEach(function(movie){
+                    var title = movie.title;
+                    var score = movie.rating.average; // 评分
+                    var year = movie.year;
+                    var kind =  movie.genres.join('、'); // 种类
+                    var collect_count = movie.collect_count; // 收藏数
+                    var image = movie.images.small;
+                    var directors = ''; // 导演
+                    for(let i = 0; i < movie.directors.length; i++){
+                        directors += movie.directors[i].name + '、';
+                    }
+                    if(directors !== ''){
+
+                        directors = directors.slice(0,directors.length - 1);
+                    }
+                    var casts = '';
+                    for(let i = 0; i < movie.casts.length; i++){
+                        casts += movie.casts[i].name + '、';
+                    }
+                    if(casts !== ''){
+                        casts = casts.slice(0,casts.length-1);
+                    }
+
+                    var template = `<li>
+                    <a href="" class='clearfix'>
+                        <div class='cover'>
+                            <img src="http://img3.doubanio.com/view/photo/s_ratio_poster/public/p524964016.jpg" alt="">
+                        </div>
+                        <div class="detail">
+                            <h3 class='title'>霸王别姬</h3>
+                            <p><span class='score'>9.3分</span><span>／1000收藏</span></p>
+                            <p>1994／剧情、爱情</p>
+                            <p>导演：诺兰</p>
+                            <p>主演：张艺谋，张艺谋，张艺谋</p>
+                        </div>
+                    </a>
+                </li>`;
+
+                    var $li = $(template);
+                    $li.find('.cover>img')[0].src = image;
+                    $li.find('.title').text(title);
+                    $li.find('.score').text(score + '分').next().text('／' + collect_count + ' 点评');
+                    $li.find('.detail').children().eq(2).text(year + '／' + kind)
+                        .next().text('导演: ' + directors).next().text('主演：' + casts);
+
+                    $('.top250').append($li);
+                })
+            }
+
+            // 监听滚动，判断是否滚动到底部
+            $('main').scroll(function () {
+
+                if($('main').scrollTop() + $('main').height() === $('#section1').height()){
+                    console.log('hit bottom');
+                    queryTop250();
+                }
+            })
+        }
+    </script>
 </body>
 </html>
