@@ -77,6 +77,32 @@
             padding: 10px 0;
         }
 
+        #section3>div:first-child{
+            text-align: center;
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        #section3>div>input{
+            background-color: #f0eeee;
+            width: 80%;
+            border: none;
+            padding: 5px;
+            line-height: 20px;
+            box-sizing: border-box;
+        }
+        #section3>div>input:focus{
+            outline: none;
+        }
+        #section3>div>button{
+            background-color: #f05347;
+            padding: 5px 8px;
+            color: white;
+            outline: none;
+            border-radius: 3px;
+            height: 30px;
+            box-sizing: border-box;
+        }
+
         footer {
             position: absolute;
             bottom: 0;
@@ -138,15 +164,33 @@
                 <i class="iconfont icon-loading"></i>
             </div>
         </section>
-        <section id="section2">2</section>
-        <section id="section3">3</section>
+        <section id="section2">
+            <ul class="us">
+
+            </ul>
+            <div class="loading">
+                <i class="iconfont icon-loading"></i>
+            </div>
+        </section>
+        <section id="section3">
+            <div>
+                <input id="input" type="text" placeholder="搜索电影">
+                <button>搜索</button>
+            </div>
+            <ul class="search">
+
+            </ul>
+            <div class="loading">
+                <i class="iconfont icon-loading"></i>
+            </div>
+        </section>
     </main>
     <footer>
         <div class='active'>
             <span class="iconfont icon-TOP"></span><span>Top250</span>
         </div>
         <div>
-            <span class="iconfont icon-us"></span><span>北美</span>
+            <span class="iconfont icon-us"></span><span>北美票房榜</span>
         </div>
         <div>
             <span class="iconfont icon-search"></span><span>搜索</span>
@@ -155,6 +199,72 @@
 
     <script>
 
+        var Helper = {
+            createNode: function (movie) {
+                var title = movie.title;
+                var score = movie.rating.average; // 评分
+                var year = movie.year;
+                var kind =  movie.genres.join('、'); // 种类
+                var collect_count = movie.collect_count; // 收藏数
+                var image = movie.images.small;
+                var directors = ''; // 导演
+                for(let i = 0; i < movie.directors.length; i++){
+                    directors += movie.directors[i].name + '、';
+                }
+                if(directors !== ''){
+
+                    directors = directors.slice(0,directors.length - 1);
+                }
+                var casts = '';
+                for(let i = 0; i < movie.casts.length; i++){
+                    casts += movie.casts[i].name + '、';
+                }
+                if(casts !== ''){
+                    casts = casts.slice(0,casts.length-1);
+                }
+
+                var template = `<li>
+                    <a href="" class='clearfix'>
+                        <div class='cover'>
+                            <img src="http://img3.doubanio.com/view/photo/s_ratio_poster/public/p524964016.jpg" alt="">
+                        </div>
+                        <div class="detail">
+                            <h3 class='title'>霸王别姬</h3>
+                            <p><span class='score'>9.3分</span><span>／1000收藏</span></p>
+                            <p>1994／剧情、爱情</p>
+                            <p>导演：诺兰</p>
+                            <p>主演：张艺谋，张艺谋，张艺谋</p>
+                        </div>
+                    </a>
+                </li>`;
+
+                var $li = $(template);
+                $li.find('.cover>img')[0].src = image;
+                $li.find('.title').text(title);
+                $li.find('.score').text(score + '分').next().text('／' + collect_count + '点评');
+                $li.find('.detail').children().eq(2).text(year + '／' + kind)
+                    .next().text('导演: ' + directors).next().text('主演：' + casts);
+                return $li;
+            },
+            isHitBottom:function($container, $content){
+                var scrollTop = $container.scrollTop();
+                var section_h = $container.height();
+                var ul_h = $content.height();
+
+                console.log('scrollTop' + scrollTop);
+                console.log('height' + section_h);
+                console.log('ul height' + ul_h);
+
+                // 增加10px的冗余，不是严格滑到最底最底
+                if(scrollTop + section_h + 10 >= ul_h){
+                    console.log('hit bottom');
+                    return true;
+                }
+                return false;
+            }
+        }
+
+
         var top250 = {
             init: function () {
                 this.$section = $('#section1');
@@ -162,11 +272,10 @@
                 this.startNum = 10;
                 this.isLoading = false;
                 this.isFinish = false;
-                this.$loading = $('.loading');
+                this.$loading = $('#section1').find('.loading');
                 this.timer = undefined; // 函数节流
                 this.bind();
                 this.start();
-
             },
             bind: function () {
                 var _this = this;
@@ -176,7 +285,7 @@
                         clearTimeout(_this.timer);
                     }
                     _this.timer = setTimeout(function () {
-                        if(_this._isHitBottom()){
+                        if(Helper.isHitBottom(_this.$section, _this.$ul)){
                             _this.start();
                             _this.timer = undefined;
                         }
@@ -228,92 +337,169 @@
             render: function (ret) {
                 var _this = this;
                 ret.subjects.forEach(function(movie){
-                    var title = movie.title;
-                    var score = movie.rating.average; // 评分
-                    var year = movie.year;
-                    var kind =  movie.genres.join('、'); // 种类
-                    var collect_count = movie.collect_count; // 收藏数
-                    var image = movie.images.small;
-                    var directors = ''; // 导演
-                    for(let i = 0; i < movie.directors.length; i++){
-                        directors += movie.directors[i].name + '、';
-                    }
-                    if(directors !== ''){
-
-                        directors = directors.slice(0,directors.length - 1);
-                    }
-                    var casts = '';
-                    for(let i = 0; i < movie.casts.length; i++){
-                        casts += movie.casts[i].name + '、';
-                    }
-                    if(casts !== ''){
-                        casts = casts.slice(0,casts.length-1);
-                    }
-
-                    var template = `<li>
-                    <a href="" class='clearfix'>
-                        <div class='cover'>
-                            <img src="http://img3.doubanio.com/view/photo/s_ratio_poster/public/p524964016.jpg" alt="">
-                        </div>
-                        <div class="detail">
-                            <h3 class='title'>霸王别姬</h3>
-                            <p><span class='score'>9.3分</span><span>／1000收藏</span></p>
-                            <p>1994／剧情、爱情</p>
-                            <p>导演：诺兰</p>
-                            <p>主演：张艺谋，张艺谋，张艺谋</p>
-                        </div>
-                    </a>
-                </li>`;
-
-                    var $li = $(template);
-                    $li.find('.cover>img')[0].src = image;
-                    $li.find('.title').text(title);
-                    $li.find('.score').text(score + '分').next().text('／' + collect_count + '点评');
-                    $li.find('.detail').children().eq(2).text(year + '／' + kind)
-                        .next().text('导演: ' + directors).next().text('主演：' + casts);
-
-                    _this.$ul.append($li);
+                    var node = Helper.createNode(movie)
+                    _this.$ul.append(node);
                 })
-            },
-            _isHitBottom:function () { // 函数名_开头，避免和属性重复
-                var scrollTop = this.$section.scrollTop();
-                var section_h = this.$section.height();
-                var ul_h = this.$ul.height();
-
-                console.log('scrollTop' + this.$section.scrollTop());
-                console.log('height' + this.$section.height());
-                console.log('ul height' + this.$ul.height());
-
-                // 增加10px的冗余，不是严格滑到最底最底
-                if(scrollTop + section_h + 10 >= ul_h){
-                    console.log('hit bottom');
-                    return true;
-                }
-                return false;
             }
         }
 
         var usBox = {
             init: function () {
+                this.$section = $('#section2');
+                this.$ul = $('.us');
+                this.isLoading = false;
+                this.$loading = $('#section2').find('.loading');
+                this.startNum = 0;
+                this.start();
 
             },
             bind: function () {
 
             },
             start: function () {
-
+                var _this = this;
+                this.getData(function (data) {
+                    _this.render(data);
+                })
+            },
+            getData: function (callback) {
+                var _this = this;
+                if(_this.isLoading){
+                    console.log('us ..wait for previous loading');
+                    return;
+                }
+                _this.isLoading = true;
+                _this.$loading.show();
+                $.ajax({
+                    url: '//api.douban.com/v2/movie/us_box',
+                    data: {
+                        start: _this.startNum,
+                        count: 10,
+                    },
+                    dataType: 'jsonp'
+                }).done(function (data) {
+                    _this.startNum += 10;
+                    callback&&callback(data); // 防止callback参数没传递
+                    // if(callback){
+                    //     callback(data);
+                    // }
+                }).fail(function () {
+                    console.log('us_box getData failed..')
+                }).always(function () {
+                    _this.isLoading = false;
+                    _this.$loading.hide();
+                })
+            },
+            render: function (data) {
+                var _this = this;
+                data.subjects.forEach(function (item) {
+                    var $li = Helper.createNode(item.subject);
+                    _this.$ul.append($li);
+                })
             }
+
         }
 
         var search = {
             init: function () {
+                this.$section = $('#section3');
+                this.$ul = $('#section3').find('.search');
+                this.$button = this.$section.find('button');
+                this.$input = this.$section.find('input');
+                this.keyword = '';
+                this.startNum = 10;
+                this.isLoading = false;
+                this.$loading = this.$section.find('.loading');
+                this.isFinish = false;
+                this.timer = undefined; // 滚动的节流
+                this.bind();
 
             },
             bind: function () {
+                var _this = this;
+                
+                var handler = function () {
+                    _this.keyword = _this.$input.val();
+                    _this.startNum = 10;
+                    _this.$ul.empty();
+                    _this.start();
+                }
+
+                this.$input.on('keydown',function (e) {
+                    if(e.keyCode === 13){ // 回车
+                        e.preventDefault();
+                        handler();
+                    }
+                })
+                this.$button.on('click',function () {
+                     handler();
+                })
+
+                this.$section.scroll(function () {
+                    if(_this.timer){
+                        console.log('search timer cleaned');
+                        clearTimeout(_this.timer);
+                    }
+                    _this.timer = setTimeout(function () {
+                        if(Helper.isHitBottom(_this.$section, _this.$ul)){
+                            _this.start();
+                            _this.timer = undefined;
+                        }
+                    }, 300)
+
+                })
+
 
             },
             start: function () {
+                var _this = this;
+                _this.getData(function (data) {
+                    _this.render(data);
+                })
 
+            },
+            getData: function (callback) {
+                var _this = this;
+                if(_this.isFinish){
+                    console.log('search result loading finished')
+                    return;
+                }
+                if(_this.isLoading){
+                    console.log('search ..wait for previous loading');
+                    return;
+                }
+                _this.isLoading = true;
+                _this.$loading.show();
+                $.ajax({
+                    url: '//api.douban.com/v2/movie/search',
+                    data: {
+                        start: _this.startNum,
+                        count: 10,
+                        q: _this.keyword
+                    },
+                    dataType: 'jsonp'
+                }).done(function (data) {
+                    _this.startNum += 10;
+                    if(_this.startNum >= data.total){
+                        this.isFinish = true;
+                    }
+                    callback&&callback(data); // 防止callback参数没传递
+                    // if(callback){
+                    //     callback(data);
+                    // }
+                }).fail(function () {
+                    console.log('search getData failed..')
+                }).always(function () {
+                    _this.isLoading = false;
+                    _this.$loading.hide();
+                })
+            },
+            render: function (data) {
+                var _this = this;
+                data.subjects.forEach(function (item) {
+                    $li = Helper.createNode(item);
+                    _this.$ul.append($li);
+                })
             }
         }
 
